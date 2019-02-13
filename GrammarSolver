@@ -1,0 +1,94 @@
+
+
+import java.io.*;
+import java.util.*;
+
+public class GrammarSolver {
+	private Map<String, String[]> nonterminal;
+	
+	//pre: list passed has not to be empty,or has two or more same nonterminals
+	//(else throw illegalArguementException)
+	//post: method will store all the data in a map data field in order to use later.
+	public GrammarSolver(List<String> grammar) {
+		if(grammar.isEmpty()){
+			throw new IllegalArgumentException(); 
+		}
+		Map<String, String[]> nonTLocal = new TreeMap<String, String[]>();
+		Iterator<String> itr = grammar.iterator();
+		while(itr.hasNext()){
+			String[] seperate = itr.next().trim().split("::=");//trim
+			if(nonTLocal.containsKey(seperate[0])){
+				throw new IllegalArgumentException();
+			}else{
+				String[] parts = seperate[1].trim().split("[|]");//trim
+				for(int i = 0; i< parts.length ; i++){
+					parts[i] = parts[i].trim();
+				}
+				nonTLocal.put(seperate[0],parts);
+			}
+		}
+		this.nonterminal = nonTLocal;
+	}
+	
+	//post: return true if there are this symbol in the grammar list.
+	public boolean grammarContains(String symbol){
+		Set<String> symbols = nonterminal.keySet();
+		return symbols.contains(symbol);
+	}
+	//pre:  grammar has to contains this symbol and times is bigger than 0.
+	//(else throw an illegalargumentexception)
+	//post: recursively generates an array of strings. the string follows grammar
+	// and the number of strings is the times that passed from user.
+	public String[] generate(String symbol, int times){
+		if(!nonterminal.containsKey(symbol)|| times < 0){
+			throw new IllegalArgumentException();
+		}
+		String[] generated = nonterminal.get(symbol);
+		String[] returnS = new String[times];		
+		for(int i = 0 ; i < times;i++){
+			Random rand = new Random();
+			int n = rand.nextInt(generated.length) + 0;
+			String symbolString = generated[n];
+			String keepTracking = "";// this keeps tracking the change of the string.
+			returnS[i]= generation(symbolString,keepTracking).trim();//generate strings.
+		}
+		return returnS;
+	}
+	
+	//post: this method return the set of nonterminals from the grammar list.
+	public String getSymbols(){
+		Set<String> symbols = nonterminal.keySet();
+		return symbols.toString();
+	}
+	
+	//post: this method generates the strings. 
+	private String generation(String s, String k){
+		
+		if (!nonterminal.containsKey(s)&&!s.contains(" ")){ // base case.
+			k += " "+ s;
+			return k;
+		}else{//recurisive case
+			String[] newG = s.trim().split("[ \t]+");
+			for(String i : newG){
+				Random rand = new Random();
+				if(nonterminal.containsKey(i)){
+					int n1 = rand.nextInt(nonterminal.get(i).length) + 0;
+					s = nonterminal.get(i)[n1].trim();
+					k = generation(s,k);
+				}else{
+					String[] new1 = i.split(" ");
+					for(String new1s : new1){
+						if(nonterminal.containsKey(new1s)){
+							int n1 = rand.nextInt(nonterminal.get(new1s).length) + 0;
+							s = nonterminal.get(new1s)[n1].trim();
+							k += " " + generation(s,k);
+						}else{
+							k += " " + new1s;
+						}
+					}
+				}
+			}
+			return k;
+		}	
+	}
+}
